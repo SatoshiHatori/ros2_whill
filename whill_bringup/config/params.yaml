@@ -1,4 +1,12 @@
 whill:
   ros__parameters:
     port_name: "/dev/ttyUSB0"
-    publish_interval_ms: 400
+
+    publish_interval_ms: 100
+    send_interval_ms: 10
+    odometry_interval_ms: 10
+
+    odom_frame: "whill_odom"
+    wheel_radius: 0.1325
+    tread: 0.496
+
