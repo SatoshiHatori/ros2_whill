@@ -9,8 +9,10 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 find_package(whill_msgs REQUIRED)
 
 include_directories(include
@@ -20,6 +22,7 @@ include_directories(include
 add_executable(whill
   src/entrypoint.cpp
   src/whill_node.cpp
+  src/odometry.cpp
   src/model_cr2/whill.cpp
   src/model_cr2/parser.cpp
   src/model_cr2/hardware/serial_port.cpp
@@ -28,13 +31,16 @@ ament_target_dependencies(whill
   rclcpp
   rclcpp_components
   std_msgs
+  nav_msgs
   sensor_msgs
   geometry_msgs
- "whill_msgs"
+  tf2_geometry_msgs
+  "whill_msgs"
 )
 
 add_library(whill_node SHARED
   src/whill_node.cpp
+  src/odometry.cpp
   src/model_cr2/whill.cpp
   src/model_cr2/parser.cpp
   src/model_cr2/hardware/serial_port.cpp
@@ -46,8 +52,10 @@ ament_target_dependencies(whill_node
   rclcpp
   rclcpp_components
   std_msgs
+  nav_msgs
   sensor_msgs
   geometry_msgs
+  tf2_geometry_msgs
   "whill_msgs"
 )
 rclcpp_components_register_nodes(whill_node "whill_driver::WhillNode")
