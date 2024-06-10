@@ -99,6 +99,7 @@ namespace whill_driver
 
         int ConvertToWhillJoy(float raw_joy);
         bool IsOutside(uint8_t target, uint8_t end1, uint8_t end2);
+        double RadDiff(double past, double current);
     };
 
 } // namespace whill_driver

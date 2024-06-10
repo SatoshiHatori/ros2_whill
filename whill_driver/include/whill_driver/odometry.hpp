@@ -32,7 +32,7 @@ namespace whill_driver
     public:
         explicit Odometry();
         explicit Odometry(double wheel_radius, double wheel_tread);
-        void update(double right_wheel_vel_mps, double left_wheel_vel_mps, double dt);
+        void update(double right_wheel_vel_rps, double left_wheel_vel_rps, double dt);
         void set(double x, double y, double yaw, double linear_x, double angular_z);
         void reset();
         nav_msgs::msg::Odometry get();
