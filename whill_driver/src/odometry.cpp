@@ -34,13 +34,16 @@ namespace whill_driver
         return rad;
     }
 
-    void Odometry::update(double right_wheel_vel_mps, double left_wheel_vel_mps, double dt)
+    void Odometry::update(double right_wheel_vel_rps, double left_wheel_vel_rps, double dt)
     {
         if (dt < 0.0001)
             return;
+        
+        double vr = right_wheel_vel_rps * wheel_radius_;
+        double vl = left_wheel_vel_rps * wheel_radius_;
 
-        long double delta_linear = (right_wheel_vel_mps + left_wheel_vel_mps) / 2.0;
-        long double delta_yaw = (right_wheel_vel_mps - left_wheel_vel_mps) / (wheel_tread_);
+        long double delta_linear = (vr + vl) / 2.0;
+        long double delta_yaw = (vr - vl) / (wheel_tread_);
 
         vehicle_.x += delta_linear * dt * std::cos(vehicle_.yaw + delta_yaw * dt / 2.0);
         vehicle_.y += delta_linear * dt * std::sin(vehicle_.yaw + delta_yaw * dt / 2.0);

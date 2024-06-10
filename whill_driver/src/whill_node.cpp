@@ -115,21 +115,30 @@ void WhillNode::OnControllerCmdVel(const geometry_msgs::msg::Twist::SharedPtr cm
     void WhillNode::OnStatesModelCr2Timer()
     {
         auto msg = std::make_shared<whill_msgs::msg::ModelCr2State>();
+        static double   past_right_motor_angle = 0.0, \
+                        past_left_motor_angle = 0.0;
+        double delta_s = send_interval_.count() / 1000.0f; // Control period [s]
+
         if (whill_->ReceiveDataset1(msg) < 1)
         {
             return;
         }
+
         states_model_cr2_pub_->publish(*msg);
->>>>>>> 53fb135 (Add odometry output and change cmd_vel unit)
 
         whill_odom_.update(
-            -msg->right_motor_speed / 3.6f,     // [km/h]->[m/s]
-            msg->left_motor_speed / 3.6f,       // [km/h]->[m/s]
-            send_interval_.count() / 1000.0f);  // [ms]->[s]
+            RadDiff(right_motor_angle, past_right_motor_angle) / delta_s, // [rad/s]
+            RadDiff(left_motor_angle, past_left_motor_angle) / delta_s,   // [rad/s]
+            delta_s);  // [s]
+
         nav_msgs::msg::Odometry odom = whill_odom_.get();
         odom.header.frame_id = odom_frame_.c_str();
         odom.header.stamp = get_clock()->now();
         odometry_pub_->publish(odom);
+        states_model_cr2_pub_->publish(*msg);
+
+        past_right_motor_angle = right_motor_angle;
+        past_left_motor_angle = left_motor_angle;
     }
 
     void WhillNode::OnControllerJoy(const sensor_msgs::msg::Joy::SharedPtr joy)
@@ -375,6 +384,19 @@ int WhillNode::ConvertToWhillJoy(float raw_joy)
             return true;
         }
         return false;
+    }
+
+    double WhillNode::RadDiff(double current, double past)
+    {
+        double diff = current - past;
+        if (past * current < 0 && std::abs(diff) > M_PI) // Cross M_PI
+        {
+            if (past > 0 && current < 0)
+                diff += 2.0 * M_PI;
+            else
+                diff -= 2.0 * M_PI;
+        }
+        return diff;
     }
 
 } // namespace whill_driver
