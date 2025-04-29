@@ -80,9 +80,6 @@ namespace whill_driver
             const std::shared_ptr<whill_msgs::srv::SetBatterySaving::Response> response);
         rclcpp::Service<whill_msgs::srv::SetBatterySaving>::SharedPtr set_battery_saving_srv_;
 
-        int ConvertToWhillJoy(float raw_joy);
-        bool IsOutside(uint8_t target, uint8_t end1, uint8_t end2);
-
         void OnControllerJoy(const sensor_msgs::msg::Joy::SharedPtr joy);
         rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr controller_joy_sub_;
 

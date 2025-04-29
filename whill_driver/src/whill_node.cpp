@@ -94,24 +94,6 @@ namespace whill_driver
     {
     }
 
-<<<<<<< HEAD
-void WhillNode::OnControllerCmdVel(const geometry_msgs::msg::Twist::SharedPtr cmd_vel)
-{
-  // [m/s] to [km/h]: *3.6
-  // SetVelocityCommand takes command unit (0.004 km/h): *250
-  int linear = cmd_vel->linear.x * 900;
-
-  // wheel_tread: 0.496
-  // [rad/s] to [km/h]: *wheel_tread*3.6
-  // SetVelocityCommand takes command unit (0.004 km/h): *250
-  // The direction of rotation is reversed in ROS and SetVelocityCommand
-  int angular = cmd_vel->angular.z * -446.4;
-  whill_->SendSetVelocityCommand(linear, angular);
-  RCLCPP_INFO(
-    this->get_logger(), "[CmdVel] linear:['%f'], angular:['%f']", cmd_vel->linear.x,
-    cmd_vel->angular.z);
-}
-=======
     void WhillNode::OnStatesModelCr2Timer()
     {
         auto msg = std::make_shared<whill_msgs::msg::ModelCr2State>();
@@ -127,9 +109,9 @@ void WhillNode::OnControllerCmdVel(const geometry_msgs::msg::Twist::SharedPtr cm
         states_model_cr2_pub_->publish(*msg);
 
         whill_odom_.update(
-            RadDiff(right_motor_angle, past_right_motor_angle) / delta_s, // [rad/s]
-            RadDiff(left_motor_angle, past_left_motor_angle) / delta_s,   // [rad/s]
-            delta_s);  // [s]
+            RadDiff(msg->right_motor_angle, past_right_motor_angle) / delta_s, // [rad/s]
+            RadDiff(msg->left_motor_angle, past_left_motor_angle) / delta_s,   // [rad/s]
+            delta_s);                                                          // [s]
 
         nav_msgs::msg::Odometry odom = whill_odom_.get();
         odom.header.frame_id = odom_frame_.c_str();
@@ -137,8 +119,8 @@ void WhillNode::OnControllerCmdVel(const geometry_msgs::msg::Twist::SharedPtr cm
         odometry_pub_->publish(odom);
         states_model_cr2_pub_->publish(*msg);
 
-        past_right_motor_angle = right_motor_angle;
-        past_left_motor_angle = left_motor_angle;
+        past_right_motor_angle = msg->right_motor_angle;
+        past_left_motor_angle = msg->left_motor_angle;
     }
 
     void WhillNode::OnControllerJoy(const sensor_msgs::msg::Joy::SharedPtr joy)
@@ -188,6 +170,31 @@ void WhillNode::OnControllerCmdVel(const geometry_msgs::msg::Twist::SharedPtr cm
             break;
         }
     }
+    void WhillNode::OnSetBatterySavingSrv(
+        const std::shared_ptr<rmw_request_id_t> request_header,
+        const std::shared_ptr<whill_msgs::srv::SetBatterySaving::Request> request,
+        const std::shared_ptr<whill_msgs::srv::SetBatterySaving::Response> response)
+    {
+        (void)request_header;
+        response->result = -1;
+
+        uint8_t l0 = uint8_t(request->l0);
+        uint8_t b0 = uint8_t(request->b0);
+        if (IsOutside(l0, 1, 90))
+        {
+            RCLCPP_WARN(this->get_logger(), "l0 must be assingned between 1 - 90");
+            return;
+        }
+        if (IsOutside(b0, 0, 1))
+        {
+            RCLCPP_WARN(this->get_logger(), "b0 must be assingned between 0 - 1");
+            return;
+        }
+
+        RCLCPP_INFO(this->get_logger(), "Battery saving settings are set (l0: %d, b0: %d)", l0, b0);
+        whill_->SendSetBatterySavingCommand(l0, b0);
+        response->result = 1;
+    }
 
     void WhillNode::OnSetSpeedProfileSrv(
         const std::shared_ptr<rmw_request_id_t> request_header,
@@ -197,51 +204,6 @@ void WhillNode::OnControllerCmdVel(const geometry_msgs::msg::Twist::SharedPtr cm
         (void)request_header;
         response->result = -1;
 
-<<<<<<< HEAD
-void WhillNode::OnSetBatterySavingSrv(
-  const std::shared_ptr<rmw_request_id_t> request_header,
-  const std::shared_ptr<whill_msgs::srv::SetBatterySaving::Request> request,
-  const std::shared_ptr<whill_msgs::srv::SetBatterySaving::Response> response)
-{
-  (void)request_header;
-  response->result = -1;
-
-  uint8_t l0 = uint8_t(request->l0);
-  uint8_t b0 = uint8_t(request->b0);
-  if (IsOutside(l0, 1, 90)) {
-    RCLCPP_WARN(this->get_logger(), "l0 must be assingned between 1 - 90");
-    return;
-  }
-  if (IsOutside(b0, 0, 1)) {
-    RCLCPP_WARN(this->get_logger(), "b0 must be assingned between 0 - 1");
-    return;
-  }
-
-  RCLCPP_INFO(this->get_logger(), "Battery saving settings are set (l0: %d, b0: %d)", l0, b0);
-  whill_->SendSetBatterySavingCommand(l0, b0);
-  response->result = 1;
-}
-
-/**
- * The function ConvertToWhillJoy converts a float value to an integer value between -100 and 100.
- *
- * @param raw_joy The `ConvertToWhillJoy` function takes a float value `raw_joy` as input, which
- * represents the raw joystick input. The function then converts this raw joystick input to an integer
- * value between -100 and 100, ensuring that the value does not exceed these limits.
- *
- * @return The function `ConvertToWhillJoy` takes a float value `raw_joy`, multiplies it by 100, and
- * then checks if the result is less than -100 or greater than 100. If the result is less than -100, it
- * returns -100. If the result is greater than 100, it returns 100. Otherwise, it returns the
- * calculated value `joy`.
- */
-int WhillNode::ConvertToWhillJoy(float raw_joy)
-{
-  int joy = (int)(raw_joy * 100.0f);
-  if (joy < -100) {return -100;}
-  if (joy > 100) {return 100;}
-  return joy;
-}
-=======
         uint8_t s1 = uint8_t(request->s1);
         uint8_t fm1 = uint8_t(request->fm1);
         uint8_t fa1 = uint8_t(request->fa1);
@@ -302,7 +264,6 @@ int WhillNode::ConvertToWhillJoy(float raw_joy)
             RCLCPP_WARN(this->get_logger(), "td1 must be assingned between 40 - 160");
             return;
         }
->>>>>>> 53fb135 (Add odometry output and change cmd_vel unit)
 
         RCLCPP_INFO(this->get_logger(), "Speed profile is set");
         whill_->SendSetSpeedProfileCommand(s1, fm1, fa1, fd1, rm1, ra1, rd1, tm1, ta1, td1);
